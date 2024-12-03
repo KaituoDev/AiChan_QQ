@@ -1,0 +1,4 @@
+app_id: '123456'
+secret: 'MyVeryImportantSecret'
+guild_id: 123456
+channel_id: 123456
