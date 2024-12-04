@@ -1,3 +1,4 @@
+import json
 from enum import Enum
 
 class PacketType(Enum):
@@ -13,7 +14,7 @@ class PacketType(Enum):
 
 class SocketPacket:
 
-    def __init__(self, packet_type, content: str):
+    def __init__(self, packet_type, content: list):
         self.packet_type = packet_type
         self.content = content
 
@@ -22,7 +23,5 @@ class SocketPacket:
         return cls(PacketType[d["packetType"]],  d["content"])
 
     def to_dict(self):
-        result = dict()
-        result["packetType"] = self.packet_type.name
-        result["content"] = self.content
+        result = {"packetType": self.packet_type.name, "content": self.content}
         return result

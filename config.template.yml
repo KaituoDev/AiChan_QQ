@@ -1,4 +1,19 @@
-app_id: '123456'
-secret: 'MyVeryImportantSecret'
-guild_id: 123456
+admins:
+- 1145141919810
+app_id: 123456
+channel_chat_prefix: §7[§b群§7]§r
 channel_id: 123456
+config_auto_save_interval: 60
+fernet_key: GenerateYourOwnKeyBecauseAutoGenerationNotDoneYet
+guild_id: 123456123456
+message_interval: 1
+message_max_lines: 20
+message_threshold: 270
+port: 23333
+push_hours:
+- 1
+- 2
+secret: somerandomsecret
+server_address: 0.0.0.0
+user_id:
+  123123123: SomeMinecraftID
