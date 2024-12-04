@@ -37,10 +37,8 @@ class AiChanServer:
         try:
             async for message in websocket:
                 decrypted_content = self.fernet.decrypt(message.encode("utf-8")).decode("utf-8")
-                print(decrypted_content)
                 packet = SocketPacket.from_dict(json.loads(decrypted_content))
                 if packet.packet_type == PacketType.SERVER_CHAT_TO_BOT:
-                    print(1)
                     trigger = packet.content[0]
                     message_content = packet.content[1]
                     packet_to_server = SocketPacket(PacketType.GROUP_CHAT_TO_SERVER, [trigger, message_content])
@@ -48,7 +46,6 @@ class AiChanServer:
 
                     self.bot.server_chat.append(get_formatted_time() + remove_minecraft_color(packet.content[1]))
                 elif packet.packet_type == PacketType.SERVER_INFORMATION_TO_BOT:
-                    print(2)
                     self.bot.server_information.append(get_formatted_time() + remove_minecraft_color(packet.content[0]))
 
         except ConnectionClosedError:

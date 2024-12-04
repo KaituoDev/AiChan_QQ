@@ -125,15 +125,9 @@ class AiChanQQ(botpy.Client):
     async def on_at_message_create(self, message: Message):
         config = aichan_config.bot_config
 
-        print(message.guild_id)
-        print(message.channel_id)
-        print(message.member.roles)
-
         if int(message.guild_id) != config["guild_id"]:
-            print("guild_id not match")
             return
         if int(message.channel_id) != config["channel_id"]:
-            print("channel_id not match")
             return
         self.last_received_id = message.id
         self.last_received_timestamp = get_unix_timestamp_from_iso8601(message.timestamp)
