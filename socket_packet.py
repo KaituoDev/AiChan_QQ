@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class PacketType(Enum):
     HEARTBEAT_TO_BOT = 0
     SERVER_CHAT_TO_BOT = 1
@@ -11,6 +12,7 @@ class PacketType(Enum):
     COMMAND_TO_SERVER = 7
     SERVER_INFORMATION_TO_BOT = 8
 
+
 class SocketPacket:
 
     def __init__(self, packet_type, content: list):
@@ -19,7 +21,7 @@ class SocketPacket:
 
     @classmethod
     def from_dict(cls, d: dict):
-        return cls(PacketType[d["packetType"]],  d["content"])
+        return cls(PacketType[d["packetType"]], d["content"])
 
     def to_dict(self):
         result = {"packetType": self.packet_type.name, "content": self.content}

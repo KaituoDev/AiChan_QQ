@@ -13,6 +13,7 @@ from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, concat_st
 
 MESSAGE_POLLING_INTERVAL = 0.5
 
+
 class AiChanQQ(botpy.Client):
 
     def __init__(
@@ -30,10 +31,8 @@ class AiChanQQ(botpy.Client):
         self.last_received_id = 0
         self.last_received_timestamp = 0
         self.last_send_timestamp = 0
-        self.server_chat = []
-        self.server_information = []
+        self.messages = []
         self.server = None
-
 
     async def message_polling(self):
         global MESSAGE_POLLING_INTERVAL
@@ -63,19 +62,16 @@ class AiChanQQ(botpy.Client):
     # Send one message. No check will be done!
     async def send_message(self, msg):
         config = aichan_config.bot_config
-        await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]), content=msg)
+        await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]),
+                                    content=msg)
         self.last_send_timestamp = get_unix_timestamp()
 
     # Send all chat and information messages. No check will be done!
     async def send_messages(self):
         config = aichan_config.bot_config
-        if len(self.server_chat) != 0:
-            await self.send_message(concat_strings_with_limit(self.server_chat, config["message_max_lines"]))
-            self.server_chat.clear()
-
-        if len(self.server_information) != 0:
-            await self.send_message(concat_strings_with_limit(self.server_information, config["message_max_lines"]))
-            self.server_information.clear()
+        if len(self.messages) != 0:
+            await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"]))
+            self.messages.clear()
 
     # Check for conditions and send messages if needed
     async def try_send_messages(self):
@@ -90,10 +86,10 @@ class AiChanQQ(botpy.Client):
         config = aichan_config.bot_config
         if cmd[0] == "/say":
             if len(cmd) < 2:
-                self.server_information.append(f"{member.nick}，指令使用有误哦！请使用/say 内容")
+                self.messages.append(f"{member.nick}，指令使用有误哦！请使用/say 内容")
                 return
             if int(user.id) not in config["user_id"]:
-                self.server_information.append(f"{member.nick}，你还没有绑定MC名字哦！")
+                self.messages.append(f"{member.nick}，你还没有绑定MC名字哦！")
                 return
             msg = " ".join(cmd[1:])
             prefix = config["channel_chat_prefix"]
@@ -102,26 +98,27 @@ class AiChanQQ(botpy.Client):
                                                             ["all", f"{prefix} {mc_id}: {msg}"]))
         elif cmd[0] == "/name":
             if len(cmd) < 2:
-                self.server_information.append(f"{member.nick}，不能绑定空白名字哦！")
+                self.messages.append(f"{member.nick}，不能绑定空白名字哦！")
                 return
             mc_id = " ".join(cmd[1:])
             config["user_id"][int(user.id)] = mc_id
-            self.server_information.append(f"{member.nick}，你已成功绑定MC名字 {mc_id} ！")
+            self.messages.append(f"{member.nick}，你已成功绑定MC名字 {mc_id} ！")
         elif cmd[0] == "/list":
             if len(cmd) != 1:
-                self.server_information.append(f"{member.nick}，指令使用有误哦！请使用/list")
+                self.messages.append(f"{member.nick}，指令使用有误哦！请使用/list")
                 return
-            await self.server.broadcast_packet(SocketPacket(PacketType.LIST_REQUEST_TO_SERVER,[]))
+            await self.server.broadcast_packet(SocketPacket(PacketType.LIST_REQUEST_TO_SERVER, []))
         elif cmd[0] == "/cmd":
             if int(user.id) not in config["admins"]:
-                self.server_information.append(f"{member.nick}，你没有权限使用这个指令哦！")
+                self.messages.append(f"{member.nick}，你没有权限使用这个指令哦！")
                 return
             if len(cmd) < 3:
-                self.server_information.append(f"{member.nick}，指令使用有误哦！请使用/cmd 服务器代号 指令")
+                self.messages.append(f"{member.nick}，指令使用有误哦！请使用/cmd 服务器代号 指令")
                 return
             server_cmd = " ".join(cmd[2:])
             await self.server.broadcast_packet(SocketPacket(PacketType.COMMAND_TO_SERVER,
                                                             [cmd[1], server_cmd]))
+
     async def on_at_message_create(self, message: Message):
         config = aichan_config.bot_config
 
