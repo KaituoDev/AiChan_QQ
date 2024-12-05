@@ -34,7 +34,7 @@ async def main():
     server = AiChanServer(bot, config["server_address"], config["port"], fernet)
     # await asyncio.gather(server.start())
     await asyncio.gather(bot.start(appid=app_id, secret=secret), bot.message_polling(), server.start(),
-                         auto_save_config())
+                         auto_save_config(), bot.hourly_push())
 
 
 if __name__ == "__main__":
