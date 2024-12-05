@@ -123,8 +123,8 @@ class AiChanQQ(botpy.Client):
         config = aichan_config.bot_config
         self.last_received_id = message.id
         self.last_received_timestamp = get_unix_timestamp_from_iso8601(message.timestamp)
-        config["guild_id"] = message.guild_id
-        config["channel_id"] = message.channel_id
+        config["guild_id"] = int(message.guild_id)
+        config["channel_id"] = int(message.channel_id)
 
         sections = get_message_without_at(message.content).split()
         if len(sections) == 0:
