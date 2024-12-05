@@ -44,9 +44,9 @@ class AiChanServer:
                     packet_to_server = SocketPacket(PacketType.GROUP_CHAT_TO_SERVER, [trigger, message_content])
                     await self.broadcast_packet(packet_to_server)
 
-                    self.bot.server_chat.append(get_formatted_time() + remove_minecraft_color(packet.content[1]))
+                    self.bot.messages.append(get_formatted_time() + remove_minecraft_color(packet.content[1]))
                 elif packet.packet_type == PacketType.SERVER_INFORMATION_TO_BOT:
-                    self.bot.server_information.append(get_formatted_time() + remove_minecraft_color(packet.content[0]))
+                    self.bot.messages.append(get_formatted_time() + remove_minecraft_color(packet.content[0]))
 
         except ConnectionClosedError:
             logging.warning("A client just disconnected.")
