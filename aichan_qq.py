@@ -90,7 +90,7 @@ class AiChanQQ(botpy.Client):
 
     async def handle_command(self, cmd: list, member: Member, user: User):
         config = aichan_config.bot_config
-        always_reply: bool = config["always_reply"]
+        always_reply: bool = bool(config["always_reply"])
         if cmd[0] == "/say":
             if len(cmd) < 2:
                 self.messages.append(f"{member.nick}，指令使用有误哦！请使用/say 内容")
