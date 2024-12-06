@@ -29,7 +29,6 @@ class AiChanServer:
         async with serve(self.handler, self.host, self.port) as server:
             self.server = server
             await server.serve_forever()
-        logging.warning("Server stopped...")
 
     async def handler(self, websocket):
         logging.warning("A client just connected.")

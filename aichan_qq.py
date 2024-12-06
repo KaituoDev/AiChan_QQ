@@ -43,16 +43,17 @@ class AiChanQQ(botpy.Client):
             await self.try_send_messages()
 
     async def hourly_push(self):
-        await asyncio.sleep(3600)
         config = aichan_config.bot_config
         push_hours = config["push_hours"]
+        await asyncio.sleep(3600)
         while True:
             now = datetime.now()
             current_hour = now.hour
 
             if current_hour in push_hours:
                 logging.warning("This should be the time to push message.")
-#                await self.send_messages(True)
+                print("This should be the time to push message.")
+            #                await self.send_messages(True)
 
             # Calculate the next run time
             next_run = now + timedelta(hours=1)
@@ -135,7 +136,6 @@ class AiChanQQ(botpy.Client):
             if always_reply:
                 if len(self.messages) == 0:
                     await self.send_message(f"{member.nick}，最近没有消息哦！")
-
 
     async def on_at_message_create(self, message: Message):
         config = aichan_config.bot_config

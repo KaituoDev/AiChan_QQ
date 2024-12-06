@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 
 import botpy
 from cryptography.fernet import Fernet
@@ -9,6 +10,19 @@ from aichan_server import AiChanServer
 
 CONFIG_FILE_PATH = "config.yml"
 
+# Ignore warnings due to force stop
+warnings.filterwarnings(
+    "ignore",
+    message="coroutine '.*' was never awaited",
+    category=RuntimeWarning
+)
+
+warnings.filterwarnings(
+    "ignore",
+    message="Enable tracemalloc to get the object allocation traceback",
+    category=RuntimeWarning
+)
+
 
 async def auto_save_config():
     global CONFIG_FILE_PATH
@@ -16,6 +30,16 @@ async def auto_save_config():
     while True:
         await asyncio.sleep(config["config_auto_save_interval"])
         aichan_config.save_config(CONFIG_FILE_PATH)
+
+
+async def handle_user_input():
+    while True:
+        user_input = await asyncio.to_thread(input)
+        if user_input.strip().lower() == "stop":
+            print("Stopping...")
+            exit()
+        else:
+            print("Unknown command. Use 'stop' to stop the bot.")
 
 
 async def main():
@@ -32,9 +56,20 @@ async def main():
     bot = AiChanQQ(intents=intents)
 
     server = AiChanServer(bot, config["server_address"], config["port"], fernet)
-    # await asyncio.gather(server.start())
-    await asyncio.gather(bot.start(appid=app_id, secret=secret), bot.message_polling(), server.start(),
-                         auto_save_config(), bot.hourly_push())
+
+    tasks = [
+        bot.start(appid=app_id, secret=secret),
+        bot.message_polling(),
+        bot.hourly_push(),
+        server.start(),
+        auto_save_config(),
+        handle_user_input()
+    ]
+    try:
+        await asyncio.gather(server.start(), handle_user_input())
+        # await asyncio.gather(*tasks)
+    except SystemExit:
+        pass
 
 
 if __name__ == "__main__":
