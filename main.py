@@ -1,4 +1,5 @@
 import asyncio
+import os
 import warnings
 
 import botpy
@@ -37,7 +38,7 @@ async def handle_user_input():
         user_input = await asyncio.to_thread(input)
         if user_input.strip().lower() == "stop":
             print("Stopping...")
-            exit()
+            os._exit(0)
         else:
             print("Unknown command. Use 'stop' to stop the bot.")
 
