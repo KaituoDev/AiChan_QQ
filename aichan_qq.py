@@ -76,7 +76,7 @@ class AiChanQQ(botpy.Client):
     async def send_messages(self, active: bool = False):
         config = aichan_config.bot_config
         if len(self.messages) == 0:
-            await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"], active))
+            await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"]), active)
             self.messages.clear()
 
     # Check for conditions and send messages if needed
