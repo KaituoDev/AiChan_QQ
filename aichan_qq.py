@@ -51,9 +51,7 @@ class AiChanQQ(botpy.Client):
             current_hour = now.hour
 
             if current_hour in push_hours:
-                logging.warning("This should be the time to push message.")
-                print("This should be the time to push message.")
-            #                await self.send_messages(True)
+                await self.send_messages(True)
 
             # Calculate the next run time
             next_run = now + timedelta(hours=1)
