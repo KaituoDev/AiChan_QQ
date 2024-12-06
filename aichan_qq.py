@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from typing import List, Union
 
@@ -28,9 +29,9 @@ class AiChanQQ(botpy.Client):
             ext_handlers: Union[dict, List[dict], bool] = True,
     ):
         super().__init__(intents, timeout, is_sandbox, log_config, log_format, log_level, bot_log, ext_handlers)
-        self.last_received_id = 0
-        self.last_received_timestamp = 0
-        self.last_send_timestamp = 0
+        self.last_received_id: int = 0
+        self.last_received_timestamp: int = 0
+        self.last_send_timestamp: int = 0
         self.messages = []
         self.server = None
 
@@ -42,6 +43,7 @@ class AiChanQQ(botpy.Client):
             await self.try_send_messages()
 
     async def hourly_push(self):
+        await asyncio.sleep(3600)
         config = aichan_config.bot_config
         push_hours = config["push_hours"]
         while True:
@@ -49,7 +51,8 @@ class AiChanQQ(botpy.Client):
             current_hour = now.hour
 
             if current_hour in push_hours:
-                await self.send_messages()
+                logging.warning("This should be the time to push message.")
+            #                await self.send_messages()
 
             # Calculate the next run time
             next_run = now + timedelta(hours=1)
@@ -60,17 +63,20 @@ class AiChanQQ(botpy.Client):
             await asyncio.sleep(sleep_time)
 
     # Send one message. No check will be done!
-    async def send_message(self, msg):
+    async def send_message(self, msg, active: bool = False):
         config = aichan_config.bot_config
-        await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]),
-                                    content=msg)
+        if active:
+            await self.api.post_message(channel_id=str(config["channel_id"]), content=msg)
+        else:
+            await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]),
+                                        content=msg)
         self.last_send_timestamp = get_unix_timestamp()
 
     # Send all chat and information messages. No check will be done!
-    async def send_messages(self):
+    async def send_messages(self, active: bool = False):
         config = aichan_config.bot_config
-        if len(self.messages) != 0:
-            await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"]))
+        if len(self.messages) == 0:
+            await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"], active))
             self.messages.clear()
 
     # Check for conditions and send messages if needed
