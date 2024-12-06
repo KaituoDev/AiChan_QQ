@@ -52,7 +52,7 @@ class AiChanQQ(botpy.Client):
 
             if current_hour in push_hours:
                 logging.warning("This should be the time to push message.")
-            #                await self.send_messages()
+#                await self.send_messages(True)
 
             # Calculate the next run time
             next_run = now + timedelta(hours=1)
@@ -75,7 +75,7 @@ class AiChanQQ(botpy.Client):
     # Send all chat and information messages. No check will be done!
     async def send_messages(self, active: bool = False):
         config = aichan_config.bot_config
-        if len(self.messages) == 0:
+        if len(self.messages) != 0:
             await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"]), active)
             self.messages.clear()
 
@@ -90,6 +90,7 @@ class AiChanQQ(botpy.Client):
 
     async def handle_command(self, cmd: list, member: Member, user: User):
         config = aichan_config.bot_config
+        always_reply: bool = config["always_reply"]
         if cmd[0] == "/say":
             if len(cmd) < 2:
                 self.messages.append(f"{member.nick}，指令使用有误哦！请使用/say 内容")
@@ -102,6 +103,8 @@ class AiChanQQ(botpy.Client):
             mc_id = config["user_id"][int(user.id)]
             await self.server.broadcast_packet(SocketPacket(PacketType.GROUP_CHAT_TO_SERVER,
                                                             ["all", f"{prefix} {mc_id}: {msg}"]))
+            if always_reply:
+                self.messages.append(f"{member.nick}，你的消息已发送！")
         elif cmd[0] == "/name":
             if len(cmd) < 2:
                 self.messages.append(f"{member.nick}，不能绑定空白名字哦！")
@@ -114,6 +117,8 @@ class AiChanQQ(botpy.Client):
                 self.messages.append(f"{member.nick}，指令使用有误哦！请使用/list")
                 return
             await self.server.broadcast_packet(SocketPacket(PacketType.LIST_REQUEST_TO_SERVER, []))
+            if always_reply:
+                self.messages.append(f"{member.nick}，正在帮你查看服务器在线玩家！")
         elif cmd[0] == "/cmd":
             if int(user.id) not in config["admins"]:
                 self.messages.append(f"{member.nick}，你没有权限使用这个指令哦！")
@@ -124,6 +129,13 @@ class AiChanQQ(botpy.Client):
             server_cmd = " ".join(cmd[2:])
             await self.server.broadcast_packet(SocketPacket(PacketType.COMMAND_TO_SERVER,
                                                             [cmd[1], server_cmd]))
+            if always_reply:
+                self.messages.append(f"{member.nick}，你的指令已发送！")
+        elif cmd[0] == "/ai":
+            if always_reply:
+                if len(self.messages) == 0:
+                    await self.send_message(f"{member.nick}，最近没有消息哦！")
+
 
     async def on_at_message_create(self, message: Message):
         config = aichan_config.bot_config
