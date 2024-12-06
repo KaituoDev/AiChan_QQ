@@ -66,8 +66,7 @@ async def main():
         handle_user_input()
     ]
     try:
-        await asyncio.gather(server.start(), handle_user_input())
-        # await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
     except SystemExit:
         pass
 
