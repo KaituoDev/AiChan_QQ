@@ -121,11 +121,12 @@ class AiChanQQ(botpy.Client):
             if always_reply:
                 self.messages.append(f"{member.nick}，正在帮你查看服务器在线玩家！")
         elif cmd[0] == "/cmd":
-            if int(user.id) not in config["admins"]:
-                self.messages.append(f"{member.nick}，你没有权限使用这个指令哦！")
+            if len(cmd) < 2:
+                self.messages.append(f"{member.nick}，指令使用有误哦！请使用/cmd 指令")
                 return
-            if len(cmd) < 3:
-                self.messages.append(f"{member.nick}，指令使用有误哦！请使用/cmd 服务器代号 指令")
+            if int(user.id) not in config["admins"]:
+                # self.messages.append(f"{member.nick}，你没有权限使用这个指令哦！")
+                self.messages.append(f"{member.nick}，你的指令已发送！")
                 return
             server_cmd = " ".join(cmd[2:])
             await self.server.broadcast_packet(SocketPacket(PacketType.COMMAND_TO_SERVER,
