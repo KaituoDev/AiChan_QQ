@@ -11,6 +11,7 @@ from aichan_server import AiChanServer
 
 CONFIG_FILE_PATH = "config.yml"
 
+
 # Ignore warnings due to force stop
 warnings.filterwarnings(
     "ignore",
