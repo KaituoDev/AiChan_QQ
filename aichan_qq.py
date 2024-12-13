@@ -105,6 +105,9 @@ class AiChanQQ(botpy.Client):
             if always_reply:
                 self.messages.append(f"{member.nick}，你的消息已发送！")
         elif cmd[0] == "/name":
+            if int(user.id) in config["user_id"]:
+                self.messages.append(f"{member.nick}，你已经绑定过了哦！请联系管理员修改！")
+                return
             if len(cmd) < 2:
                 self.messages.append(f"{member.nick}，不能绑定空白名字哦！")
                 return
