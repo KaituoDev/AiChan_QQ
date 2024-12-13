@@ -11,7 +11,6 @@ from aichan_server import AiChanServer
 
 CONFIG_FILE_PATH = "config.yml"
 
-
 # Ignore warnings due to force stop
 warnings.filterwarnings(
     "ignore",
@@ -62,7 +61,7 @@ async def main():
     tasks = [
         bot.start(appid=app_id, secret=secret),
         bot.message_polling(),
-        bot.hourly_push(),
+        # bot.hourly_push(),
         server.start(),
         auto_save_config(),
         handle_user_input()
