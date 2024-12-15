@@ -145,8 +145,6 @@ class AiChanQQ(botpy.Client):
         config["guild_id"] = int(message.guild_id)
         config["channel_id"] = int(message.channel_id)
 
-        print(message.content)
-
         sections = message.content.split()
         if len(sections) == 0:
             return
