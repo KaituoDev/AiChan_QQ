@@ -3,6 +3,7 @@ import os
 import warnings
 
 import botpy
+from botpy.logging import DEFAULT_FILE_HANDLER
 from cryptography.fernet import Fernet
 
 import aichan_config
@@ -10,6 +11,9 @@ from aichan_qq import AiChanQQ
 from aichan_server import AiChanServer
 
 CONFIG_FILE_PATH = "config.yml"
+LOGS_DIR_PATH = "logs"
+
+DEFAULT_FILE_HANDLER["filename"] = os.path.join(os.getcwd(), "logs", "%(name)s.log"),
 
 # Ignore warnings due to force stop
 warnings.filterwarnings(
@@ -54,7 +58,7 @@ async def main():
     fernet = Fernet(config["fernet_key"].encode("utf-8"))
 
     intents = botpy.Intents(public_guild_messages=True, guild_messages=True)
-    bot = AiChanQQ(intents=intents)
+    bot = AiChanQQ(intents=intents, ext_handlers=DEFAULT_FILE_HANDLER)
 
     server = AiChanServer(bot, config["server_address"], config["port"], fernet)
 
