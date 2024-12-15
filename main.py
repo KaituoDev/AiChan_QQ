@@ -53,7 +53,7 @@ async def main():
 
     fernet = Fernet(config["fernet_key"].encode("utf-8"))
 
-    intents = botpy.Intents(public_guild_messages=True)
+    intents = botpy.Intents(public_guild_messages=True, guild_messages=True)
     bot = AiChanQQ(intents=intents)
 
     server = AiChanServer(bot, config["server_address"], config["port"], fernet)

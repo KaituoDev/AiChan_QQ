@@ -90,7 +90,7 @@ class AiChanQQ(botpy.Client):
     async def handle_command(self, cmd: list, member: Member, user: User):
         config = aichan_config.bot_config
         always_reply: bool = bool(config["always_reply"])
-        if cmd[0] == "/say":
+        if cmd[0] == "/say" or cmd[0] == "s":
             if len(cmd) < 2:
                 self.messages.append(f"{member.nick}，指令使用有误哦！请使用/say 内容")
                 return
@@ -104,7 +104,7 @@ class AiChanQQ(botpy.Client):
                                                             ["all", f"{prefix} {mc_id}: {msg}"]))
             if always_reply:
                 self.messages.append(f"{member.nick}，你的消息已发送！")
-        elif cmd[0] == "/name":
+        elif cmd[0] == "/name" or cmd[0] == "n":
             if int(user.id) in config["user_id"]:
                 self.messages.append(f"{member.nick}，你已经绑定过了哦！请联系管理员修改！")
                 return
@@ -114,14 +114,14 @@ class AiChanQQ(botpy.Client):
             mc_id = " ".join(cmd[1:])
             config["user_id"][int(user.id)] = mc_id
             self.messages.append(f"{member.nick}，你已成功绑定MC名字 {mc_id} ！")
-        elif cmd[0] == "/list":
+        elif cmd[0] == "/list" or cmd[0] == "l":
             if len(cmd) != 1:
                 self.messages.append(f"{member.nick}，指令使用有误哦！请使用/list")
                 return
             await self.server.broadcast_packet(SocketPacket(PacketType.LIST_REQUEST_TO_SERVER, []))
             if always_reply:
                 self.messages.append(f"{member.nick}，正在帮你查看服务器在线玩家！")
-        elif cmd[0] == "/cmd":
+        elif cmd[0] == "/cmd" or cmd[0] == "c":
             if int(user.id) not in config["admins"]:
                 self.messages.append(f"{member.nick}，你没有权限使用这个指令哦！")
                 return
@@ -138,6 +138,20 @@ class AiChanQQ(botpy.Client):
                 if len(self.messages) == 0:
                     await self.send_message(f"{member.nick}，最近没有消息哦！")
 
+    async def on_message_create(self, message: Message):
+        config = aichan_config.bot_config
+        self.last_received_id = message.id
+        self.last_received_timestamp = get_unix_timestamp_from_iso8601(message.timestamp)
+        config["guild_id"] = int(message.guild_id)
+        config["channel_id"] = int(message.channel_id)
+
+        sections = message.content.split()
+        if len(sections) == 0:
+            return
+
+        # if not sections[0].startswith("/"):
+        #     return
+
     async def on_at_message_create(self, message: Message):
         config = aichan_config.bot_config
         self.last_received_id = message.id
@@ -149,7 +163,7 @@ class AiChanQQ(botpy.Client):
         if len(sections) == 0:
             return
 
-        if not sections[0].startswith("/"):
-            return
+        # if not sections[0].startswith("/"):
+        #     return
 
         await self.handle_command(sections, message.member, message.author)
