@@ -3,7 +3,7 @@ import os
 import warnings
 
 import botpy
-from botpy.logging import DEFAULT_FILE_HANDLER
+from botpy.logging import DEFAULT_FILE_HANDLER, DEFAULT_FILE_FORMAT
 from cryptography.fernet import Fernet
 
 import aichan_config
@@ -11,9 +11,14 @@ from aichan_qq import AiChanQQ
 from aichan_server import AiChanServer
 
 CONFIG_FILE_PATH = "config.yml"
-LOGS_DIR_PATH = "logs"
+LOGS_DIR_PATH = os.path.join(os.getcwd(), "logs")
 
-DEFAULT_FILE_HANDLER["filename"] = os.path.join(os.getcwd(), "logs", "%(name)s.log"),
+os.makedirs(LOGS_DIR_PATH, exist_ok=True)
+
+# Change log file path
+DEFAULT_FILE_HANDLER["filename"] = os.path.join(LOGS_DIR_PATH, "%(name)s.log")
+# Use default log format
+DEFAULT_FILE_HANDLER["format"] = DEFAULT_FILE_FORMAT
 
 # Ignore warnings due to force stop
 warnings.filterwarnings(
