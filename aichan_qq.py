@@ -10,7 +10,8 @@ from botpy.types.user import Member, User
 
 import aichan_config
 from socket_packet import SocketPacket, PacketType
-from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, concat_strings_with_limit, get_message_without_at
+from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, concat_strings_with_limit, \
+    get_message_without_at, is_at_section, get_user_id_from_at_section
 
 MESSAGE_POLLING_INTERVAL = 0.5
 
@@ -105,15 +106,27 @@ class AiChanQQ(botpy.Client):
             if always_reply:
                 self.messages.append(f"{member.nick}，你的消息已发送！")
         elif cmd[0] == "/name" or cmd[0] == "n":
-            if int(user.id) in config["user_id"]:
-                self.messages.append(f"{member.nick}，你已经绑定过了哦！请联系管理员修改！")
-                return
             if len(cmd) < 2:
                 self.messages.append(f"{member.nick}，不能绑定空白名字哦！")
                 return
-            mc_id = " ".join(cmd[1:])
-            config["user_id"][int(user.id)] = mc_id
-            self.messages.append(f"{member.nick}，你已成功绑定MC名字 {mc_id} ！")
+            if is_at_section(cmd[1]):
+                if int(user.id) not in config["admins"]:
+                    self.messages.append(f"{member.nick}，你没有权限为别人绑定名字哦！")
+                    return
+                if len(cmd) < 3:
+                    self.messages.append(f"{member.nick}，不能为别人绑定空白名字哦！")
+                    return
+                mc_id = " ".join(cmd[2:])
+                target_user_id = get_user_id_from_at_section(cmd[1])
+                config["user_id"][int(target_user_id)] = mc_id
+                self.messages.append(f"{member.nick}，你已成功为用户{target_user_id}绑定MC名字 {mc_id} ！")
+            else:
+                if int(user.id) in config["user_id"]:
+                    self.messages.append(f"{member.nick}，你已经绑定过了哦！请联系管理员修改！")
+                    return
+                mc_id = " ".join(cmd[1:])
+                config["user_id"][int(user.id)] = mc_id
+                self.messages.append(f"{member.nick}，你已成功绑定MC名字 {mc_id} ！")
         elif cmd[0] == "/list" or cmd[0] == "l":
             if len(cmd) != 1:
                 self.messages.append(f"{member.nick}，指令使用有误哦！请使用/list")

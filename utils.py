@@ -24,6 +24,18 @@ def get_message_without_at(msg: str) -> str:
     return re.sub(pattern, "", msg)
 
 
+# Return true if given section is @user
+def is_at_section(section: str) -> bool:
+    pattern = r"<@!\d+>"
+    return bool(re.fullmatch(pattern, section))
+
+
+def get_user_id_from_at_section(section: str) -> str | None:
+    pattern = r"<@!(\d+)>"
+    match = re.search(pattern, section)
+    return match.group(1) if match else None
+
+
 def concat_strings_with_limit(strings: list, max_lines: int) -> str:
     if len(strings) <= max_lines:
         return '\n'.join(strings)
