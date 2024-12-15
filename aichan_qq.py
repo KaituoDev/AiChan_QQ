@@ -145,12 +145,13 @@ class AiChanQQ(botpy.Client):
         config["guild_id"] = int(message.guild_id)
         config["channel_id"] = int(message.channel_id)
 
+        print(message.content)
+
         sections = message.content.split()
         if len(sections) == 0:
             return
 
-        # if not sections[0].startswith("/"):
-        #     return
+        await self.handle_command(sections, message.member, message.author)
 
     async def on_at_message_create(self, message: Message):
         config = aichan_config.bot_config
@@ -162,8 +163,5 @@ class AiChanQQ(botpy.Client):
         sections = get_message_without_at(message.content).split()
         if len(sections) == 0:
             return
-
-        # if not sections[0].startswith("/"):
-        #     return
 
         await self.handle_command(sections, message.member, message.author)
