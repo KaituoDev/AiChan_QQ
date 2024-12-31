@@ -1,6 +1,7 @@
 import json
 import logging
 
+from botpy import logger
 from cryptography.fernet import Fernet
 from websockets import ConnectionClosedError
 from websockets.asyncio.server import serve
@@ -25,13 +26,13 @@ class AiChanServer:
             await websocket.send(message)
 
     async def start(self):
-        logging.info("Trying to start server on " + str(self.host) + ":" + str(self.port) + "...")
+        logger.info("Trying to start server on " + str(self.host) + ":" + str(self.port) + "...")
         async with serve(self.handler, self.host, self.port) as server:
             self.server = server
             await server.serve_forever()
 
     async def handler(self, websocket):
-        logging.info("A client just connected.")
+        logger.info("A client just connected.")
         self.connections.add(websocket)
         try:
             async for message in websocket:
@@ -49,10 +50,10 @@ class AiChanServer:
                     self.bot.messages.append(get_formatted_time() + final_message)
 
         except ConnectionClosedError:
-            logging.warning("A client just disconnected.")
+            logger.warning("A client just disconnected.")
         except Exception as e:
-            logging.warning("An exception was raised. A client just disconnected.")
-            logging.warning(e)
+            logger.warning("An exception was raised. A client just disconnected.")
+            logger.warning(e)
         finally:
             self.connections.remove(websocket)
 
