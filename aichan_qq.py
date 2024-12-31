@@ -71,6 +71,7 @@ class AiChanQQ(botpy.Client):
             await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]),
                                         content=msg)
         self.last_send_timestamp = get_unix_timestamp()
+        logging.info(f"Sent message: {msg} to channel {config['channel_id']}")
 
     # Send all chat and information messages. No check will be done!
     async def send_messages(self, active: bool = False):
@@ -152,6 +153,7 @@ class AiChanQQ(botpy.Client):
                     await self.send_message(f"{member.nick}，最近没有消息哦！")
 
     async def on_message_create(self, message: Message):
+        logging.info(f"Received message: {message.content} from channel {message.channel_id}")
         config = aichan_config.bot_config
         self.last_received_id = message.id
         self.last_received_timestamp = get_unix_timestamp_from_iso8601(message.timestamp)

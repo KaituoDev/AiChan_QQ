@@ -25,13 +25,13 @@ class AiChanServer:
             await websocket.send(message)
 
     async def start(self):
-        logging.warning("Trying to start server on " + str(self.host) + ":" + str(self.port) + "...")
+        logging.info("Trying to start server on " + str(self.host) + ":" + str(self.port) + "...")
         async with serve(self.handler, self.host, self.port) as server:
             self.server = server
             await server.serve_forever()
 
     async def handler(self, websocket):
-        logging.warning("A client just connected.")
+        logging.info("A client just connected.")
         self.connections.add(websocket)
         try:
             async for message in websocket:
