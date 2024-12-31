@@ -1,5 +1,5 @@
 import asyncio
-import logging
+from botpy import logger
 from datetime import datetime, timedelta
 from typing import List, Union
 
@@ -153,7 +153,7 @@ class AiChanQQ(botpy.Client):
                     await self.send_message(f"{member.nick}，最近没有消息哦！")
 
     async def on_message_create(self, message: Message):
-        botpy.logger.info(f"Received message: {message.content} from channel {message.channel_id}")
+        logger.info(f"Received message: {message.content} from channel {message.channel_id}")
         config = aichan_config.bot_config
         self.last_received_id = message.id
         self.last_received_timestamp = get_unix_timestamp_from_iso8601(message.timestamp)
