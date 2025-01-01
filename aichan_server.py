@@ -7,7 +7,7 @@ from websockets import ConnectionClosedError
 from websockets.asyncio.server import serve
 from keyword_processor import filter_text
 from socket_packet import SocketPacket, PacketType
-from utils import get_formatted_time, remove_minecraft_color
+from utils import get_formatted_time, remove_minecraft_color, remove_url
 
 
 class AiChanServer:
@@ -43,10 +43,10 @@ class AiChanServer:
                     message_content = packet.content[1]
                     packet_to_server = SocketPacket(PacketType.GROUP_CHAT_TO_SERVER, [trigger, message_content])
                     await self.broadcast_packet(packet_to_server)
-                    final_message = filter_text(remove_minecraft_color(packet.content[1]))
+                    final_message = filter_text(remove_url(remove_minecraft_color(packet.content[1])))
                     self.bot.messages.append(get_formatted_time() + final_message)
                 elif packet.packet_type == PacketType.SERVER_INFORMATION_TO_BOT:
-                    final_message = filter_text(remove_minecraft_color(packet.content[0]))
+                    final_message = filter_text(remove_url(remove_minecraft_color(packet.content[0])))
                     self.bot.messages.append(get_formatted_time() + final_message)
 
         except ConnectionClosedError:

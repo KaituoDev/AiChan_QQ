@@ -24,6 +24,11 @@ def get_message_without_at(msg: str) -> str:
     return re.sub(pattern, "", msg)
 
 
+def remove_url(msg: str) -> str:
+    pattern = "[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+    return re.sub(pattern, "", msg)
+
+
 # Return true if given section is @user
 def is_at_section(section: str) -> bool:
     pattern = r"<@!\d+>"
