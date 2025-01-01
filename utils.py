@@ -25,8 +25,8 @@ def get_message_without_at(msg: str) -> str:
 
 
 def remove_url(msg: str) -> str:
-    pattern = "[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-    return re.sub(pattern, "", msg)
+    pattern = r"[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+    return re.sub(pattern, "[链接已屏蔽]", msg)
 
 
 # Return true if given section is @user
