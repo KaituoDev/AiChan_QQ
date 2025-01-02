@@ -9,6 +9,7 @@ from botpy.message import Message
 from botpy.types.user import Member, User
 
 import aichan_config
+import keyword_processor
 from socket_packet import SocketPacket, PacketType
 from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, concat_strings_with_limit, \
     get_message_without_at, is_at_section, get_user_id_from_at_section
@@ -151,6 +152,15 @@ class AiChanQQ(botpy.Client):
             if always_reply:
                 if len(self.messages) == 0:
                     await self.send_message(f"{member.nick}，最近没有消息哦！")
+        elif cmd[0] == "/remove" or cmd[0] == "r":
+            if int(user.id) not in config["admins"]:
+                self.messages.append(f"{member.nick}，你没有权限使用这个指令哦！")
+                return
+            if len(cmd) != 2:
+                self.messages.append(f"{member.nick}，指令使用有误哦！请使用/remove 关键词")
+                return
+            keyword_processor.remove_keyword(cmd[1])
+            self.messages.append(f"{member.nick}，关键词 {cmd[1]} 已成功移除！")
 
     async def on_message_create(self, message: Message):
         logger.info(f"[{message.channel_id}] {message.author.id} -> \n{message.content}")
