@@ -73,7 +73,8 @@ async def main():
         # bot.hourly_push(),
         server.start(),
         auto_save_config(),
-        handle_user_input()
+        handle_user_input(),
+        bot.run_http_server()
     ]
     try:
         await asyncio.gather(*tasks)

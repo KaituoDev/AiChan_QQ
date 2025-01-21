@@ -1,4 +1,7 @@
 import asyncio
+
+import aiohttp
+from aiohttp import web
 from botpy import logger
 from datetime import datetime, timedelta
 from typing import List, Union
@@ -15,6 +18,7 @@ from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, concat_st
     get_message_without_at, is_at_section, get_user_id_from_at_section
 
 MESSAGE_POLLING_INTERVAL = 0.5
+HTTP_SERVER_PORT = 23000
 
 
 class AiChanQQ(botpy.Client):
@@ -36,6 +40,26 @@ class AiChanQQ(botpy.Client):
         self.last_send_timestamp: int = 0
         self.messages = []
         self.server = None
+
+    async def http_handle(self, request):
+        if len(self.messages) is not 0:
+            return web.Response(text="There are messages to be sent.", status=200)
+        else:
+            return web.Response(text="No messages are to be sent.", status=404)
+
+    async def run_http_server(self):
+        global HTTP_SERVER_PORT
+        app = web.Application()
+        app.router.add_get("/", self.http_handle)
+        runner = aiohttp.web.AppRunner(app)
+        await runner.setup()
+
+        site = aiohttp.web.TCPSite(runner, port=HTTP_SERVER_PORT)
+        logger.info(f"Starting HTTP server on port {HTTP_SERVER_PORT}...")
+        await site.start()
+
+        while True:
+            await asyncio.sleep(3600)  # Simulate long-running application
 
     async def message_polling(self):
         global MESSAGE_POLLING_INTERVAL
