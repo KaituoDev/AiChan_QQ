@@ -14,7 +14,7 @@ from botpy.types.user import Member, User
 import aichan_config
 import keyword_processor
 from socket_packet import SocketPacket, PacketType
-from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, concat_strings_with_limit, \
+from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, \
     get_message_without_at, is_at_section, get_user_id_from_at_section
 
 MESSAGE_POLLING_INTERVAL = 0.5
@@ -108,8 +108,13 @@ class AiChanQQ(botpy.Client):
     async def send_messages(self, active: bool = False):
         config = aichan_config.bot_config
         if len(self.messages) != 0:
-            await self.send_message(concat_strings_with_limit(self.messages, config["message_max_lines"]), active)
-            self.messages.clear()
+            new_message = self.get_messages_with_limit(config["message_max_lines"])
+            await self.send_message(new_message, active)
+
+    def get_messages_with_limit(self, message_max_lines: int) -> str:
+        new_message = "\n".join(self.messages[:message_max_lines])
+        del self.messages[:message_max_lines]
+        return new_message
 
     # Check for conditions and send messages if needed
     async def try_send_messages(self):

@@ -39,11 +39,3 @@ def get_user_id_from_at_section(section: str) -> str | None:
     pattern = r"<@!(\d+)>"
     match = re.search(pattern, section)
     return match.group(1) if match else None
-
-
-def concat_strings_with_limit(strings: list, max_lines: int) -> str:
-    if len(strings) <= max_lines:
-        return '\n'.join(strings)
-    prefix = f"已隐藏更早的{len(strings) - max_lines}条消息"
-    sublist = strings[(len(strings) - max_lines):len(strings)]
-    return prefix + '\n' + '\n'.join(sublist)
