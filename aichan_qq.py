@@ -91,10 +91,16 @@ class AiChanQQ(botpy.Client):
     async def send_message(self, msg, active: bool = False):
         config = aichan_config.bot_config
         if active:
-            await self.api.post_message(channel_id=str(config["channel_id"]), content=msg)
+            try:
+                await self.api.post_message(channel_id=str(config["channel_id"]), content=msg)
+            except Exception as e:
+                logger.error(f"Failed to send message: {e}")
         else:
-            await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]),
-                                        content=msg)
+            try:
+                await self.api.post_message(msg_id=str(self.last_received_id), channel_id=str(config["channel_id"]),
+                                            content=msg)
+            except Exception as e:
+                logger.error(f"Failed to send message: {e}")
         self.last_send_timestamp = get_unix_timestamp()
         logger.info(f"-> [{config['channel_id']}]\n{msg}")
 
