@@ -6,11 +6,11 @@ import botpy
 from botpy.logging import DEFAULT_FILE_HANDLER, DEFAULT_FILE_FORMAT
 from cryptography.fernet import Fernet
 
-import aichan_config
+import aichan_storage
+
 from aichan_qq import AiChanQQ
 from aichan_server import AiChanServer
 
-CONFIG_FILE_PATH = "config.yml"
 LOGS_DIR_PATH = os.path.join(os.getcwd(), "logs")
 
 os.makedirs(LOGS_DIR_PATH, exist_ok=True)
@@ -34,12 +34,11 @@ warnings.filterwarnings(
 )
 
 
-async def auto_save_config():
-    global CONFIG_FILE_PATH
-    config = aichan_config.bot_config
+async def auto_save_data():
+    config = aichan_storage.bot_config
     while True:
-        await asyncio.sleep(config["config_auto_save_interval"])
-        aichan_config.save_config(CONFIG_FILE_PATH)
+        await asyncio.sleep(config["data_auto_save_interval"])
+        aichan_storage.save_data()
 
 
 async def handle_user_input():
@@ -53,26 +52,30 @@ async def handle_user_input():
 
 
 async def main():
-    global CONFIG_FILE_PATH
-    aichan_config.load_config(CONFIG_FILE_PATH)
+    aichan_storage.load_config()
+    aichan_storage.load_data()
 
-    config = aichan_config.bot_config
-    app_id = str(config["app_id"])
+    config = aichan_storage.bot_config
+    app_id = config["app_id"]
     secret = config["secret"]
 
     fernet = Fernet(config["fernet_key"].encode("utf-8"))
 
-    intents = botpy.Intents(public_guild_messages=True, guild_messages=True)
+    intents = botpy.Intents(
+        public_guild_messages=True,
+        guild_messages=True,
+        direct_message=True,
+        public_messages=True,
+    )
     bot = AiChanQQ(intents=intents, ext_handlers=DEFAULT_FILE_HANDLER)
 
     server = AiChanServer(bot, config["server_address"], config["port"], fernet)
 
     tasks = [
         bot.start(appid=app_id, secret=secret),
-        bot.message_polling(),
-        # bot.hourly_push(),
+        bot.regular_message_polling(),
         server.start(),
-        auto_save_config(),
+        auto_save_data(),
         handle_user_input(),
         bot.run_http_server()
     ]

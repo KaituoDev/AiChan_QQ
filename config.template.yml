@@ -1,20 +1,41 @@
-always_reply: false
-admins:
-- 1145141919810
-app_id: 123456
+# Websocket server configuration
+server_address: '0.0.0.0'
+port: 23333
+fernet_key: 'generate_your_own_fernet_key_and_replace_this_one'
+
+# QQ bot authentication
+app_id: 'your_app_id_here'
+secret: 'your_secret_here'
+
+# Functionality settings
 channel_chat_prefix: §7[§b群§7]§r
-channel_id: 123456
-config_auto_save_interval: 60
-fernet_key: GenerateYourOwnKeyBecauseAutoGenerationNotDoneYet
-guild_id: 123456123456
+data_auto_save_interval: 60
 message_interval: 1
 message_max_lines: 20
 message_threshold: 270
-port: 23333
-push_hours:
-- 1
-- 2
-secret: somerandomsecret
-server_address: 0.0.0.0
-user_id:
-  123123123: SomeMinecraftID
+
+# Private message admins
+private_admins:
+  - '1145141919810'
+  - '1145141919811'
+
+# Group admins. Key is group ID, value is list of admin user IDs in that group.
+# Be cautious that the same user may have different IDs in different groups/guilds.
+group_admins:
+  '1145141919810':
+    - '1145141919810'
+    - '1145141919811'
+  '1145141919811':
+    - '1145141919810'
+    - '1145141919811'
+
+# Guild admins. Key is guild ID, value is list of admin user IDs in that guild.
+# Be cautious that the same user may have different IDs in different groups/guilds.
+guild_admins:
+  '1145141919810':
+    - '1145141919810'
+    - '1145141919811'
+  '1145141919811':
+    - '1145141919810'
+    - '1145141919811'
+

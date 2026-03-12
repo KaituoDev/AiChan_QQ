@@ -6,8 +6,8 @@ def remove_minecraft_color(message: str) -> str:
     return re.sub(r'[&§][0-9a-fk-or]', '', message)
 
 
-def get_formatted_time() -> str:
-    current_time = datetime.now().strftime("%H:%M")
+def get_formatted_time(fmt: str = "%H:%M:%S") -> str:
+    current_time = datetime.now().strftime(fmt)
     return f"[{current_time}]"
 
 
@@ -15,13 +15,26 @@ def get_unix_timestamp_from_iso8601(iso8601: str) -> int:
     return int(datetime.fromisoformat(iso8601).timestamp())
 
 
+def get_unix_timestamp_from_rfc3339(rfc3339: str) -> int:
+    safe_str = rfc3339.replace("Z", "+00:00")
+    dt = datetime.fromisoformat(safe_str)
+    return int(dt.timestamp())
+
+
 def get_unix_timestamp() -> int:
     return int(datetime.now().timestamp())
 
 
 def get_message_without_at(msg: str) -> str:
+    """
+    Remove the first @bot mention from the message content.
+    If the input contains multiple @bot mentions, only the first one will be removed.
+    This could lead to problems when parsing commands.
+    :param msg: The original message content, which may contain @bot mentions.
+    :return: The message content with the first @bot mention removed.
+    """
     pattern = r"<@!\d+>"
-    return re.sub(pattern, "", msg)
+    return re.sub(pattern, "", msg, count=1)
 
 
 def remove_url(msg: str) -> str:
