@@ -415,10 +415,10 @@ class AiChanQQ(botpy.Client):
                 [context.to_json(), sections[1], server_cmd]
             ))
 
-        elif sections[0] == "/ai":
+        elif sections[0] == "/ai" or sections[0] == "a":
             return
 
-        elif sections[0] == "/remove":
+        elif sections[0] == "/remove" or sections[0] == "r":
             if not is_admin(context):
                 self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
                 return
@@ -430,6 +430,22 @@ class AiChanQQ(botpy.Client):
             keyword = sections[1]
             keyword_processor.remove_keyword(keyword)
             self.try_add_context_message(context, f"{title}，关键词 {keyword} 已成功移除！")
+
+        elif sections[0] == "/whitelist" or sections[0] == "w":
+            if not is_admin(context):
+                self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
+                return
+
+            if len(sections) != 2:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
+                return
+
+            mc_id = sections[1]
+            server_cmd = "minecraft:whitelist add " + mc_id
+            await self.server.broadcast_packet(SocketPacket(
+                PacketType.BOT_COMMAND_TO_SERVER,
+                [context.to_json(), 'all', server_cmd]
+            ))
 
 
     # Listen to all guild messages
