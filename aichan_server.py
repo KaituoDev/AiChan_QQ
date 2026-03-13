@@ -48,10 +48,12 @@ class AiChanServer:
                     await self.broadcast_packet(packet_to_server)
                     final_message = filter_text(remove_url(remove_minecraft_color(packet.content[1])))
                     self.bot.regular_messages.append(get_formatted_time("%H:%M") + final_message)
+                    self.bot.message_history.append(get_formatted_time("%H:%M") + final_message)
 
                 elif packet.packet_type == PacketType.SERVER_INFORMATION_TO_BOT:
                     final_message = filter_text(remove_url(remove_minecraft_color(packet.content[0])))
                     self.bot.regular_messages.append(get_formatted_time("%H:%M") + final_message)
+                    self.bot.message_history.append(get_formatted_time("%H:%M") + final_message)
 
                 elif packet.packet_type == PacketType.SERVER_COMMAND_FEEDBACK_TO_BOT:
                     context = MessageContext.from_json(packet.content[0])

@@ -1,5 +1,6 @@
 import asyncio
 import json
+from collections import deque
 from dataclasses import dataclass, asdict, field
 from enum import Enum
 from typing import List, Union, Optional, Dict
@@ -133,6 +134,7 @@ class AiChanQQ(botpy.Client):
         self.last_sent_channel_msg_timestamp: int = 0
         self.last_received_channel_msg_context: Optional[MessageContext] = None
         self.regular_messages : List[str] = []
+        self.message_history = deque(maxlen=aichan_storage.bot_config["message_history_limit"])
         self.message_contexts : Dict[MessageContext, ContextState] = {}
         self.server = None
 
@@ -446,6 +448,19 @@ class AiChanQQ(botpy.Client):
                 PacketType.BOT_COMMAND_TO_SERVER,
                 [context.to_json(), 'all', server_cmd]
             ))
+
+        elif sections[0] == "/history" or sections[0] == "h":
+            if len(sections) != 1:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/history")
+                return
+
+            if len(self.message_history) == 0:
+                self.try_add_context_message(context, f"{title}，当前没有历史消息哦！")
+                return
+
+            header = f"最近{len(self.message_history)}条消息如下："
+            history_message = "\n".join(self.message_history)
+            self.try_add_context_message(context, f"{header}\n{history_message}")
 
 
     # Listen to all guild messages
