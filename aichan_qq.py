@@ -515,6 +515,7 @@ class AiChanQQ(botpy.Client):
         if sections[0] == "/say":
             # Sending messages to Minecraft servers is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
+                self.try_add_context_message(context, f"{title}，发送消息仅支持在频道中使用哦！")
                 return
 
             if len(sections) < 2:
@@ -526,6 +527,7 @@ class AiChanQQ(botpy.Client):
         elif sections[0] == "/name":
             # Binding MC names is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
+                self.try_add_context_message(context, f"{title}，绑定MC名字仅支持在频道中使用哦！")
                 return
 
             if len(sections) < 2:
