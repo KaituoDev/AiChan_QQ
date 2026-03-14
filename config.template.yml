@@ -1,3 +1,6 @@
+# Audit mode switch
+audit_mode: false
+
 # Websocket server configuration
 server_address: '0.0.0.0'
 port: 23333

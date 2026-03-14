@@ -146,6 +146,7 @@ class AiChanQQ(botpy.Client):
         self.message_contexts : Dict[MessageContext, ContextState] = {}
         self.server = None
         self.online_servers : Dict[SocketHandler, ServerInfo] = {}
+        self.audit_mode : bool = aichan_storage.bot_config["audit_mode"]
 
 
     async def add_context(self, context: MessageContext):
@@ -359,14 +360,14 @@ class AiChanQQ(botpy.Client):
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/say 内容")
                 return
 
-            new_guild_username = get_guild_username(context)
-            if new_guild_username is None:
+            guild_username = get_guild_username(context)
+            if guild_username is None:
                 self.try_add_context_message(context, f"{title}，你还没有绑定MC名字哦！")
                 return
 
             msg = " ".join(sections[1:])
             prefix = config["channel_chat_prefix"]
-            full_msg = f"{prefix} {new_guild_username}: {msg}"
+            full_msg = f"{prefix} {guild_username}: {msg}"
             await self.server.broadcast_packet(
                 SocketPacket(PacketType.BOT_CHAT_TO_SERVER,
         ["all", full_msg])
@@ -422,10 +423,21 @@ class AiChanQQ(botpy.Client):
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/command 服务器代号 指令")
                 return
 
+            trigger = sections[1]
+            server_found = False
+            for info in self.online_servers.values():
+                if trigger == info.trigger or trigger == info.broadcast_trigger:
+                    server_found = True
+                    break
+
+            if not server_found:
+                self.try_add_context_message(context, f"{title}，“{trigger}”不属于任何一个服务器的指令触发词哦！请使用/ping 查看指令触发词！")
+                return
+
             server_cmd = " ".join(sections[2:])
             await self.server.broadcast_packet(SocketPacket(
                 PacketType.BOT_COMMAND_TO_SERVER,
-                [context.to_json(), sections[1], server_cmd]
+                [context.to_json(), trigger, server_cmd]
             ))
 
         elif sections[0] == "/ai" or sections[0] == "a":
@@ -495,6 +507,65 @@ class AiChanQQ(botpy.Client):
             self.try_add_context_message(context, f"{header}\n{servers_message}")
 
 
+    async def handle_command_audit_mode(self, cmd: str, context: MessageContext, title: str = "用户"):
+        sections = cmd.split()
+        if len(sections) == 0:
+            return
+
+        if sections[0] == "/say":
+            # Sending messages to Minecraft servers is only allowed in guild channels.
+            if context.message_type != MessageType.CHANNEL:
+                return
+
+            if len(sections) < 2:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/say 内容")
+                return
+
+            self.try_add_context_message(context, f"{title}，发送消息成功！")
+
+        elif sections[0] == "/name":
+            # Binding MC names is only allowed in guild channels.
+            if context.message_type != MessageType.CHANNEL:
+                return
+
+            if len(sections) < 2:
+                self.try_add_context_message(context, f"{title}，不能绑定空白名字哦！请使用/name MC名字")
+                return
+
+            new_guild_username = " ".join(sections[1:])
+            self.try_add_context_message(context, f"{title}，你已成功绑定MC名字 {new_guild_username} ！")
+
+        elif sections[0] == "/list":
+            self.try_add_context_message(context, f"{title}，正在获取在线玩家列表...")
+            await self.handle_command(cmd, context, title)
+
+        elif sections[0] == "/command":
+            if len(sections) < 2:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/command 指令")
+                return
+
+            self.try_add_context_message(context, f"{title}，发送指令成功！")
+
+
+        elif sections[0] == "/ai":
+            self.try_add_context_message(context, f"你好，{title}！")
+
+        elif sections[0] == "/whitelist":
+            if len(sections) < 2:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
+                return
+
+            mc_id = " ".join(sections[1:])
+            self.try_add_context_message(context, f"{title}，成功将玩家 {mc_id} 加入白名单！")
+
+        elif sections[0] == "/history":
+            self.try_add_context_message(context, f"{title}，正在获取服务器动态...\n服务器最近无动态。")
+
+        elif sections[0] == "/ping":
+            self.try_add_context_message(context, f"{title}，正在获取在线服务器列表...")
+            await self.handle_command(cmd, context, title)
+
+
     # Listen to all guild messages
     async def on_message_create(self, message: Message):
         logger.info(f"Received channel message:\n{get_formatted_time()}[{message.guild_id}][{message.channel_id}][{message.author.id}] ->\n{message.content}")
@@ -510,7 +581,10 @@ class AiChanQQ(botpy.Client):
         if context not in self.message_contexts:
             await self.add_context(context)
 
-        await self.handle_command(message.content, context, message.member.nick)
+        if self.audit_mode:
+            await self.handle_command_audit_mode(message.content, context, message.member.nick)
+        else:
+            await self.handle_command(message.content, context, message.member.nick)
 
         self.last_received_channel_msg_context = context
 
@@ -532,7 +606,10 @@ class AiChanQQ(botpy.Client):
             await self.add_context(context)
 
         real_message = get_message_without_at(message.content)
-        await self.handle_command(real_message, context, message.member.nick)
+        if self.audit_mode:
+            await self.handle_command_audit_mode(real_message, context, message.member.nick)
+        else:
+            await self.handle_command(real_message, context, message.member.nick)
 
         self.last_received_channel_msg_context = context
 
@@ -551,7 +628,10 @@ class AiChanQQ(botpy.Client):
         if context not in self.message_contexts:
             await self.add_context(context)
 
-        await self.handle_command(message.content, context)
+        if self.audit_mode:
+            await self.handle_command_audit_mode(message.content, context)
+        else:
+            await self.handle_command(message.content, context)
 
 
     # Listen to private messages
@@ -567,5 +647,8 @@ class AiChanQQ(botpy.Client):
         if context not in self.message_contexts:
             await self.add_context(context)
 
-        await self.handle_command(message.content, context)
+        if self.audit_mode:
+            await self.handle_command_audit_mode(message.content, context)
+        else:
+            await self.handle_command(message.content, context)
 

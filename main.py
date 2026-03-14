@@ -73,12 +73,14 @@ async def main():
 
     tasks = [
         bot.start(appid=app_id, secret=secret),
-        bot.regular_message_polling(),
         server.start(),
         auto_save_data(),
         handle_user_input(),
         bot.run_http_server()
     ]
+    if not config["audit_mode"]:
+        tasks.append(bot.regular_message_polling())
+
     try:
         await asyncio.gather(*tasks)
     except SystemExit:
