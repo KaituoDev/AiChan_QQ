@@ -18,7 +18,7 @@ import keyword_processor
 from socket_packet import SocketPacket, PacketType
 from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, \
     get_message_without_at, is_at_section, get_user_id_from_at_section, get_unix_timestamp_from_rfc3339, \
-    get_formatted_time
+    get_formatted_time, remove_minecraft_color
 
 # This interval is to prevent the bot from spamming messages too quickly.
 MESSAGE_POLLING_INTERVAL = 0.5
@@ -366,10 +366,12 @@ class AiChanQQ(botpy.Client):
 
             msg = " ".join(sections[1:])
             prefix = config["channel_chat_prefix"]
+            full_msg = f"{prefix} {new_guild_username}: {msg}"
             await self.server.broadcast_packet(
                 SocketPacket(PacketType.BOT_CHAT_TO_SERVER,
-        ["all", f"{prefix} {new_guild_username}: {msg}"])
+        ["all", full_msg])
             )
+            self.message_history.append(get_formatted_time("%H:%M") + remove_minecraft_color(full_msg))
 
         elif sections[0] == "/name" or sections[0] == "n":
             # Binding MC names is only allowed in guild channels.
