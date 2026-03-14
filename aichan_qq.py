@@ -452,7 +452,7 @@ class AiChanQQ(botpy.Client):
                 return
 
             mc_id = sections[1]
-            server_cmd = "minecraft:whitelist add " + mc_id
+            server_cmd = "whitelist add " + mc_id
             await self.server.broadcast_packet(SocketPacket(
                 PacketType.BOT_COMMAND_TO_SERVER,
                 [context.to_json(), 'all', server_cmd]
