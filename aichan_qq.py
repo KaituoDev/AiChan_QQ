@@ -351,7 +351,7 @@ class AiChanQQ(botpy.Client):
             return
 
         config = aichan_storage.bot_config
-        if sections[0] == "/say" or sections[0] == "s":
+        if sections[0].lower() in ("/say", "say", "/s", "s"):
             # Sending messages to Minecraft servers is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
                 return
@@ -374,7 +374,7 @@ class AiChanQQ(botpy.Client):
             )
             self.message_history.append(get_formatted_time("%H:%M") + remove_minecraft_color(full_msg))
 
-        elif sections[0] == "/name" or sections[0] == "n":
+        elif sections[0].lower() in ("/name", "name", "/n", "n"):
             # Binding MC names is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
                 return
@@ -407,14 +407,14 @@ class AiChanQQ(botpy.Client):
                 update_guild_username(context, new_guild_username)
                 self.try_add_context_message(context, f"{title}，你已成功绑定MC名字 {new_guild_username} ！")
 
-        elif sections[0] == "/list" or sections[0] == "l":
+        elif sections[0].lower() in ("/list", "list", "/l", "l"):
             if len(sections) != 1:
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/list")
                 return
 
             await self.server.broadcast_packet(SocketPacket(PacketType.BOT_LIST_REQUEST_TO_SERVER, [context.to_json()]))
 
-        elif sections[0] == "/command" or sections[0] == "c":
+        elif sections[0].lower() in ("/command", "command", "/c", "c"):
             if not is_admin(context):
                 self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
                 return
@@ -440,10 +440,10 @@ class AiChanQQ(botpy.Client):
                 [context.to_json(), trigger, server_cmd]
             ))
 
-        elif sections[0] == "/ai" or sections[0] == "a":
+        elif sections[0].lower() in ("/ai", "ai", "/a", "a"):
             return
 
-        elif sections[0] == "/remove" or sections[0] == "r":
+        elif sections[0].lower() in ("/remove", "remove", "/r", "r"):
             if not is_admin(context):
                 self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
                 return
@@ -456,7 +456,7 @@ class AiChanQQ(botpy.Client):
             keyword_processor.remove_keyword(keyword)
             self.try_add_context_message(context, f"{title}，关键词 {keyword} 已成功移除！")
 
-        elif sections[0] == "/whitelist" or sections[0] == "w":
+        elif sections[0].lower() in ("/whitelist", "whitelist", "/w", "w"):
             if not is_admin(context):
                 self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
                 return
@@ -472,7 +472,7 @@ class AiChanQQ(botpy.Client):
                 [context.to_json(), 'all', server_cmd]
             ))
 
-        elif sections[0] == "/history" or sections[0] == "h":
+        elif sections[0].lower() in ("/history", "history", "/h", "h"):
             if len(sections) != 1:
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/history")
                 return
@@ -485,7 +485,7 @@ class AiChanQQ(botpy.Client):
             history_message = "\n".join(self.message_history)
             self.try_add_context_message(context, f"{header}\n{history_message}")
 
-        elif sections[0] == "/ping" or sections[0] == "p":
+        elif sections[0].lower() in ("/ping", "ping", "/p", "p"):
             if len(sections) != 1:
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/ping")
                 return
@@ -512,7 +512,7 @@ class AiChanQQ(botpy.Client):
         if len(sections) == 0:
             return
 
-        if sections[0] == "/say":
+        if sections[0].lower() in ("/say", "say"):
             # Sending messages to Minecraft servers is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
                 self.try_add_context_message(context, f"{title}，发送消息仅支持在频道中使用哦！")
@@ -524,7 +524,7 @@ class AiChanQQ(botpy.Client):
 
             self.try_add_context_message(context, f"{title}，发送消息成功！")
 
-        elif sections[0] == "/name":
+        elif sections[0].lower() in ("/name", "name"):
             # Binding MC names is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
                 self.try_add_context_message(context, f"{title}，绑定MC名字仅支持在频道中使用哦！")
@@ -537,11 +537,11 @@ class AiChanQQ(botpy.Client):
             new_guild_username = " ".join(sections[1:])
             self.try_add_context_message(context, f"{title}，你已成功绑定MC名字 {new_guild_username} ！")
 
-        elif sections[0] == "/list":
+        elif sections[0].lower() in ("/list", "list"):
             self.try_add_context_message(context, f"{title}，正在获取在线玩家列表...")
             await self.handle_command(cmd, context, title)
 
-        elif sections[0] == "/command":
+        elif sections[0].lower() in ("/command", "command"):
             if len(sections) < 2:
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/command 指令")
                 return
@@ -549,10 +549,10 @@ class AiChanQQ(botpy.Client):
             self.try_add_context_message(context, f"{title}，发送指令成功！")
 
 
-        elif sections[0] == "/ai":
+        elif sections[0].lower() in ("/ai", "ai"):
             self.try_add_context_message(context, f"你好，{title}！")
 
-        elif sections[0] == "/whitelist":
+        elif sections[0].lower() in ("/whitelist", "whitelist"):
             if len(sections) < 2:
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
                 return
@@ -560,10 +560,10 @@ class AiChanQQ(botpy.Client):
             mc_id = " ".join(sections[1:])
             self.try_add_context_message(context, f"{title}，成功将玩家 {mc_id} 加入白名单！")
 
-        elif sections[0] == "/history":
+        elif sections[0].lower() in ("/history", "history"):
             self.try_add_context_message(context, f"{title}，正在获取服务器动态...\n服务器最近无动态。")
 
-        elif sections[0] == "/ping":
+        elif sections[0].lower() in ("/ping", "ping"):
             self.try_add_context_message(context, f"{title}，正在获取在线服务器列表...")
             await self.handle_command(cmd, context, title)
 
