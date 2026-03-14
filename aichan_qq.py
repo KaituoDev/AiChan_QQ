@@ -3,6 +3,7 @@ import json
 from collections import deque
 from dataclasses import dataclass, asdict, field
 from enum import Enum
+from logging.handlers import SocketHandler
 from typing import List, Union, Optional, Dict
 
 import aiohttp
@@ -77,6 +78,13 @@ class ContextState:
     sequence: int = 1
 
 
+@dataclass
+class ServerInfo:
+    name: str
+    trigger: str
+    broadcast_trigger: str
+
+
 def is_admin(context: MessageContext) -> bool:
     config = aichan_storage.bot_config
 
@@ -137,6 +145,7 @@ class AiChanQQ(botpy.Client):
         self.message_history = deque(maxlen=aichan_storage.bot_config["message_history_limit"])
         self.message_contexts : Dict[MessageContext, ContextState] = {}
         self.server = None
+        self.online_servers : Dict[SocketHandler, ServerInfo] = {}
 
 
     async def add_context(self, context: MessageContext):
@@ -461,6 +470,27 @@ class AiChanQQ(botpy.Client):
             header = f"最近{len(self.message_history)}条消息如下："
             history_message = "\n".join(self.message_history)
             self.try_add_context_message(context, f"{header}\n{history_message}")
+
+        elif sections[0] == "/ping" or sections[0] == "p":
+            if len(sections) != 1:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/ping")
+                return
+
+            if len(self.online_servers) == 0:
+                self.try_add_context_message(context, f"{title}，当前没有在线服务器哦！")
+                return
+
+            header = f"当前有{len(self.online_servers)}个服务器在线："
+            if is_admin(context):
+                servers_message = "\n".join(
+                    [f"{info.name}({info.trigger}/{info.broadcast_trigger})" for info in self.online_servers.values()]
+                )
+            else:
+                servers_message = "，".join(
+                    [f"{info.name}" for info in self.online_servers.values()]
+                )
+
+            self.try_add_context_message(context, f"{header}\n{servers_message}")
 
 
     # Listen to all guild messages

@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 from websockets import ConnectionClosedError
 from websockets.asyncio.server import serve
 
-from aichan_qq import MessageContext
+from aichan_qq import MessageContext, ServerInfo
 from keyword_processor import filter_text
 from socket_packet import SocketPacket, PacketType
 from utils import get_formatted_time, remove_minecraft_color, remove_url
@@ -60,13 +60,22 @@ class AiChanServer:
                     feedback = filter_text(remove_url(remove_minecraft_color(packet.content[1])))
                     self.bot.try_add_context_message(context, feedback)
 
+                elif packet.packet_type == PacketType.SERVER_HELLO_TO_BOT:
+                    server_name = packet.content[0]
+                    server_trigger = packet.content[1]
+                    server_broadcast_trigger = packet.content[2]
+                    self.bot.online_servers[websocket] = ServerInfo(
+                        server_name, server_trigger, server_broadcast_trigger
+                    )
+
         except ConnectionClosedError:
             logger.warning("A client just disconnected.")
         except Exception as e:
             logger.warning("An exception was raised. A client just disconnected.")
             logger.warning(e)
         finally:
-            self.connections.remove(websocket)
+            self.bot.online_servers.pop(websocket, None)
+            self.connections.discard(websocket)
 
     async def broadcast_packet(self, packet: SocketPacket):
         raw_content = json.dumps(packet.to_dict())
