@@ -542,23 +542,29 @@ class AiChanQQ(botpy.Client):
             await self.handle_command(cmd, context, title)
 
         elif sections[0].lower() in ("/command", "command"):
-            if len(sections) < 2:
-                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/command 指令")
-                return
+            if not is_admin(context):
+                if len(sections) < 2:
+                    self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/command 指令")
+                    return
 
-            self.try_add_context_message(context, f"{title}，发送指令成功！")
-
+                self.try_add_context_message(context, f"{title}，发送指令成功！")
+            else:
+                await self.handle_command(cmd, context, title)
 
         elif sections[0].lower() in ("/ai", "ai"):
             self.try_add_context_message(context, f"你好，{title}！")
 
         elif sections[0].lower() in ("/whitelist", "whitelist"):
-            if len(sections) < 2:
-                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
-                return
+            if not is_admin(context):
+                if len(sections) < 2:
+                    self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
+                    return
 
-            mc_id = " ".join(sections[1:])
-            self.try_add_context_message(context, f"{title}，成功将玩家 {mc_id} 加入白名单！")
+                mc_id = " ".join(sections[1:])
+                self.try_add_context_message(context, f"{title}，成功将玩家 {mc_id} 加入白名单！")
+
+            else:
+                await self.handle_command(cmd, context, title)
 
         elif sections[0].lower() in ("/history", "history"):
             self.try_add_context_message(context, f"{title}，正在获取服务器动态...\n服务器最近无动态。")
