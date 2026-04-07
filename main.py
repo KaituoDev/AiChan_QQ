@@ -7,6 +7,7 @@ from botpy.logging import DEFAULT_FILE_HANDLER, DEFAULT_FILE_FORMAT
 from cryptography.fernet import Fernet
 
 import aichan_storage
+import word_filter_api
 
 from aichan_qq import AiChanQQ
 from aichan_server import AiChanServer
@@ -55,9 +56,14 @@ async def main():
     aichan_storage.load_config()
     aichan_storage.load_data()
 
+    # Initialize the global api session before creating tasks
+    await word_filter_api.init_client()
+
     config = aichan_storage.bot_config
     app_id = config["app_id"]
     secret = config["secret"]
+
+    word_filter_api.FILTER_SERVER_URL = config["filter_server_address"]
 
     fernet = Fernet(config["fernet_key"].encode("utf-8"))
 
@@ -85,6 +91,9 @@ async def main():
         await asyncio.gather(*tasks)
     except SystemExit:
         pass
+    finally:
+        await word_filter_api.close_client()
+        aichan_storage.save_data()
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ from botpy import logger
 from botpy.message import Message, GroupMessage, C2CMessage
 
 import aichan_storage
-import keyword_processor
+import word_filter_api
 from socket_packet import SocketPacket, PacketType
 from utils import get_unix_timestamp_from_iso8601, get_unix_timestamp, \
     get_message_without_at, is_at_section, get_user_id_from_at_section, get_unix_timestamp_from_rfc3339, \
@@ -443,18 +443,58 @@ class AiChanQQ(botpy.Client):
         elif sections[0].lower() in ("/ai", "ai", "/a", "a"):
             return
 
-        elif sections[0].lower() in ("/remove", "remove", "/r", "r"):
+        elif sections[0].lower() in ("/keyword", "keyword", "/k", "k"):
             if not is_admin(context):
                 self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
                 return
 
-            if len(sections) != 2:
-                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/remove 关键词")
+            if len(sections) < 4:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/keyword allow/deny add/remove 关键词")
                 return
 
-            keyword = sections[1]
-            keyword_processor.remove_keyword(keyword)
-            self.try_add_context_message(context, f"{title}，关键词 {keyword} 已成功移除！")
+            policy = sections[1].lower()
+            if policy not in ["allow", "deny"]:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/keyword allow/deny add/remove 关键词")
+                return
+
+            action = sections[2].lower()
+            if action not in ["add", "remove"]:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/keyword allow/deny add/remove 关键词")
+                return
+
+            keyword = " ".join(sections[3:])
+            if policy == "allow" and action == "add":
+                result = await word_filter_api.add_word_allow(keyword)
+                if result is None:
+                    self.try_add_context_message(context, f"{title}，无法连接到过滤服务器，请联系管理员！")
+                elif result:
+                    self.try_add_context_message(context, f"{title}，关键词 {keyword} 已成功加入允许列表！")
+                else:
+                    self.try_add_context_message(context, f"{title}，关键词 {keyword} 已经在允许列表中了哦！")
+            elif policy == "allow" and action == "remove":
+                result = await word_filter_api.remove_word_allow(keyword)
+                if result is None:
+                    self.try_add_context_message(context, f"{title}，无法连接到过滤服务器，请联系管理员！")
+                elif result:
+                    self.try_add_context_message(context, f"{title}，关键词 {keyword} 已从允许列表中移除！")
+                else:
+                    self.try_add_context_message(context, f"{title}，关键词 {keyword} 不在允许列表中哦！")
+            elif policy == "deny" and action == "add":
+                result = await word_filter_api.add_word_deny(keyword)
+                if result is None:
+                    self.try_add_context_message(context, f"{title}，无法连接到过滤服务器，请联系管理员！")
+                elif result:
+                    self.try_add_context_message(context, f"{title}，该关键词已成功加入禁止列表！")
+                else:
+                    self.try_add_context_message(context, f"{title}，该关键词已经在禁止列表中了哦！")
+            elif policy == "deny" and action == "remove":
+                result = await word_filter_api.remove_word_deny(keyword)
+                if result is None:
+                    self.try_add_context_message(context, f"{title}，无法连接到过滤服务器，请联系管理员！")
+                elif result:
+                    self.try_add_context_message(context, f"{title}，该关键词已从禁止列表中移除！")
+                else:
+                    self.try_add_context_message(context, f"{title}，该关键词不在禁止列表中哦！")
 
         elif sections[0].lower() in ("/whitelist", "whitelist", "/w", "w"):
             if not is_admin(context):

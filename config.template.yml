@@ -1,6 +1,9 @@
 # Audit mode switch
 audit_mode: false
 
+# Sensitive word filter server configuration
+filter_server_address: 'http://127.0.0.1:55000/'
+
 # Websocket server configuration
 server_address: '0.0.0.0'
 port: 23333
