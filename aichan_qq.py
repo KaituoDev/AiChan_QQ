@@ -441,7 +441,7 @@ class AiChanQQ(botpy.Client):
             ))
 
         elif sections[0].lower() in ("/ai", "ai", "/a", "a"):
-            return
+            self.try_add_context_message(context, "我在哦，主人(●'◡'●)")
 
         elif sections[0].lower() in ("/keyword", "keyword", "/k", "k"):
             if not is_admin(context):
