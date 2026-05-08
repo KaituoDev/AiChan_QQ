@@ -1,4 +1,5 @@
 import asyncio
+import random
 import json
 from collections import deque
 from dataclasses import dataclass, asdict, field
@@ -441,7 +442,27 @@ class AiChanQQ(botpy.Client):
             ))
 
         elif sections[0].lower() in ("/ai", "ai", "/a", "a"):
-            self.try_add_context_message(context, "我在哦，主人(●'◡'●)")
+
+            blessings = ["愿耶和华主赐福与您"
+                         ,"愿“自有永有的”与您同在"
+                         ,"愿至高者因您今日所行的，以善报您"
+                         ,"愿耶和华主在您遭难的日子应允您"
+                         ,"愿“坐宝座的”从圣所救助您"
+                         ,"愿他记念您的一切供献"
+                         ,"愿他将你心所愿的赐给您"
+                         ,"愿耶和华主成就您一切所求的"
+                         ,"愿主赐福给您、保护您"
+                         ,"愿耶和华主使他的荣光照您"
+                         ,"愿仁慈的父向您仰脸，赐您平安"
+                         ,"愿审判全地的主与您同在"
+                         ,"愿耶和华您的神与您同在"
+                         ,"愿耶和华您的神指示我们当走的路"
+                         ,"愿我主万岁"
+                         ,"愿耶和华主为您建立坚固的家"
+                         ,"愿“坐宝座的”在你遭难的日子回答你"
+                         ,"愿“坐宝座的”赐福与您"]
+
+            self.try_add_context_message(context, "我在的，主人，" + random.choice(blessings))
 
         elif sections[0].lower() in ("/keyword", "keyword", "/k", "k"):
             if not is_admin(context):
