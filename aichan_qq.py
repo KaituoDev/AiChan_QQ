@@ -462,7 +462,7 @@ class AiChanQQ(botpy.Client):
                          ,"愿“坐宝座的”在你遭难的日子回答你"
                          ,"愿“坐宝座的”赐福与您"]
 
-            self.try_add_context_message(context, "我在的，主人，" + random.choice(blessings))
+            self.try_add_context_message(context, "我在，亲爱的牧羊人，" + random.choice(blessings))
 
         elif sections[0].lower() in ("/keyword", "keyword", "/k", "k"):
             if not is_admin(context):
