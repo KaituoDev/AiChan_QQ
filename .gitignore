@@ -1,3 +1,6 @@
 logs/
 config.yml
 data.yml
+venv/
+__pycache__/
+.idea/

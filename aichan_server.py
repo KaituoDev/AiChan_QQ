@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 from websockets import ConnectionClosedError
 from websockets.asyncio.server import serve
 
+import aichan_storage
 from aichan_qq import MessageContext, ServerInfo
 from socket_packet import SocketPacket, PacketType
 from utils import get_formatted_time, remove_minecraft_color, remove_url
@@ -85,6 +86,28 @@ class AiChanServer:
                     self.bot.online_servers[websocket] = ServerInfo(
                         server_name, server_trigger, server_broadcast_trigger
                     )
+
+                elif packet.packet_type == PacketType.SERVER_PLAYER_LOOKUP_REQUEST_TO_BOT:
+                    mc_id = packet.content[0].lower()
+                    session_id = packet.content[1]
+                    data = aichan_storage.bot_data
+                    banlist = data.get("manual_banlist", [])
+                    whitelist = data.get("manual_whitelist", [])
+
+                    if mc_id in banlist:
+                        is_authorized, is_banned = False, True
+                    elif mc_id in whitelist:
+                        is_authorized, is_banned = True, False
+                    else:
+                        found = any(
+                            username == mc_id
+                            for username in data.get("usernames", {}).values()
+                        )
+                        is_authorized, is_banned = found, False
+
+                    response = SocketPacket(PacketType.BOT_PLAYER_LOOKUP_RESULT_TO_SERVER,
+                                           [mc_id, session_id, str(is_authorized).lower(), str(is_banned).lower()])
+                    await self.broadcast_packet(response)
 
         except ConnectionClosedError:
             logger.warning("A client just disconnected.")

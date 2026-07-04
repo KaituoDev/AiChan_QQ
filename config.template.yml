@@ -21,28 +21,13 @@ message_max_lines: 20
 message_threshold: 270
 message_history_limit: 10
 
-# Private message admins
-private_admins:
+# Admins for group and private messages
+admins:
   - '1145141919810'
   - '1145141919811'
 
-# Group admins. Key is group ID, value is list of admin user IDs in that group.
-# Be cautious that the same user may have different IDs in different groups/guilds.
-group_admins:
-  '1145141919810':
-    - '1145141919810'
-    - '1145141919811'
-  '1145141919811':
-    - '1145141919810'
-    - '1145141919811'
-
-# Guild admins. Key is guild ID, value is list of admin user IDs in that guild.
-# Be cautious that the same user may have different IDs in different groups/guilds.
+# Admins for guild/channel messages
 guild_admins:
-  '1145141919810':
-    - '1145141919810'
-    - '1145141919811'
-  '1145141919811':
-    - '1145141919810'
-    - '1145141919811'
+  - '1145141919810'
+  - '1145141919811'
 

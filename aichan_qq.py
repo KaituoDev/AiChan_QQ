@@ -88,41 +88,13 @@ class ServerInfo:
 def is_admin(context: MessageContext) -> bool:
     config = aichan_storage.bot_config
 
-    if context.message_type == MessageType.PRIVATE:
-        # Use 'or []' to prevent private_admins from being parsed as None when it's empty in YAML
-        return context.user_id in (config.get("private_admins") or [])
-
-    if context.message_type == MessageType.GROUP:
-        group_admins = config.get("group_admins") or {}
-        return context.user_id in group_admins.get(context.group_id, [])
+    if context.message_type in (MessageType.PRIVATE, MessageType.GROUP):
+        return context.user_id in (config.get("admins") or [])
 
     if context.message_type == MessageType.CHANNEL:
-        guild_admins = config.get("guild_admins") or {}
-        return context.user_id in guild_admins.get(context.guild_id, [])
+        return context.user_id in (config.get("guild_admins") or [])
 
     return False
-
-
-def get_guild_username(context: MessageContext) -> Optional[str]:
-    if context.message_type != MessageType.CHANNEL:
-        raise ValueError("get_guild_usernames should only be called for channel messages.")
-    data = aichan_storage.bot_data
-    return data.get("guild_usernames", {}).get(context.guild_id, {}).get(context.user_id)
-
-
-def update_guild_username(context: MessageContext, name: str, target_user_id: Optional[str] = None):
-    if context.message_type != MessageType.CHANNEL:
-        raise ValueError("update_guild_username should only be called for channel messages.")
-
-    actual_target_user_id = target_user_id if target_user_id is not None else context.user_id
-    data = aichan_storage.bot_data
-
-    if "guild_usernames" not in data:
-        data["guild_usernames"] = {}
-    if context.guild_id not in data["guild_usernames"]:
-        data["guild_usernames"][context.guild_id] = {}
-
-    data["guild_usernames"][context.guild_id][actual_target_user_id] = name
 
 
 class AiChanQQ(botpy.Client):
@@ -360,7 +332,8 @@ class AiChanQQ(botpy.Client):
                 self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/say 内容")
                 return
 
-            guild_username = get_guild_username(context)
+            data = aichan_storage.bot_data
+            guild_username = data.get("guild_usernames", {}).get(context.user_id)
             if guild_username is None:
                 self.try_add_context_message(context, f"{title}，你还没有绑定MC名字哦！")
                 return
@@ -383,6 +356,7 @@ class AiChanQQ(botpy.Client):
                 self.try_add_context_message(context, f"{title}，不能绑定空白名字哦！")
                 return
 
+            data = aichan_storage.bot_data
             if is_at_section(sections[1]):
                 if not is_admin(context):
                     self.try_add_context_message(context, f"{title}，你没有权限为别人绑定名字哦！")
@@ -392,19 +366,23 @@ class AiChanQQ(botpy.Client):
                     self.try_add_context_message(context, f"{title}，不能为别人绑定空白名字哦！")
                     return
 
-                new_guild_username = " ".join(sections[2:])
-                target_user_id = get_user_id_from_at_section(sections[1])
-                update_guild_username(context, new_guild_username, target_user_id)
+                new_guild_username = " ".join(sections[2:]).lower()
+                target_user_id = get_user_id_frwom_at_section(sections[1])
+                data.setdefault("guild_usernames", {})[target_user_id] = new_guild_username
                 self.try_add_context_message(context, f"{title}，你已成功为用户{target_user_id}绑定MC名字 {new_guild_username} ！")
             else:
-                old_guild_username = get_guild_username(context)
+                old_guild_username = data.get("guild_usernames", {}).get(context.user_id)
                 # User can update name if they haven't bound a name before, or they are an admin.
                 if (not is_admin(context)) and (old_guild_username is not None):
                     self.try_add_context_message(context, f"{title}，你已经绑定过了MC名字 {old_guild_username} ！请联系管理员修改！")
                     return
 
-                new_guild_username = " ".join(sections[1:])
-                update_guild_username(context, new_guild_username)
+                new_guild_username = " ".join(sections[1:]).lower()
+                if any(v == new_guild_username and k != context.user_id
+                       for k, v in data.get("guild_usernames", {}).items()):
+                    self.try_add_context_message(context, f"{title}，MC 名字 {new_guild_username} 已被其他人绑定！")
+                    return
+                data.setdefault("guild_usernames", {})[context.user_id] = new_guild_username
                 self.try_add_context_message(context, f"{title}，你已成功绑定MC名字 {new_guild_username} ！")
 
         elif sections[0].lower() in ("/list", "list", "/l", "l"):
@@ -497,20 +475,114 @@ class AiChanQQ(botpy.Client):
                     self.try_add_context_message(context, f"{title}，该关键词不在禁止列表中哦！")
 
         elif sections[0].lower() in ("/whitelist", "whitelist", "/w", "w"):
+            if context.message_type == MessageType.CHANNEL:
+                return
+
+            sub = sections[1].lower() if len(sections) > 1 else ""
+            data = aichan_storage.bot_data
+
+            if sub in ("add", "remove", "list"):
+                if not is_admin(context):
+                    self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
+                    return
+
+                if sub == "list":
+                    lst = data.get("manual_whitelist", [])
+                    if not lst:
+                        self.try_add_context_message(context, f"{title}，额外白名单中没有玩家！")
+                    else:
+                        self.try_add_context_message(context, f"{title}，额外白名单中共有 {len(lst)} 名玩家: {', '.join(lst)}")
+                    return
+
+                if len(sections) < 3:
+                    self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist add/remove ID")
+                    return
+                mc_id = " ".join(sections[2:]).lower()
+
+                if sub == "add":
+                    data.setdefault("manual_whitelist", [])
+                    if mc_id in data["manual_whitelist"]:
+                        self.try_add_context_message(context, f"{title}，玩家 {mc_id} 已在白名单中！")
+                    else:
+                        data["manual_whitelist"].append(mc_id)
+                        self.try_add_context_message(context, f"{title}，已将玩家 {mc_id} 加入白名单！")
+                else:
+                    if mc_id in data.get("manual_whitelist", []):
+                        data["manual_whitelist"].remove(mc_id)
+                        self.try_add_context_message(context, f"{title}，已将玩家 {mc_id} 从白名单移除！")
+                    else:
+                        self.try_add_context_message(context, f"{title}，玩家 {mc_id} 不在白名单中！")
+            else:
+                if len(sections) < 2:
+                    self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
+                    return
+                mc_id = " ".join(sections[1:]).lower()
+
+                data.setdefault("usernames", {})
+
+                if any(v == mc_id and k != context.user_id
+                       for k, v in data["usernames"].items()):
+                    self.try_add_context_message(context, f"{title}，MC 名字 {mc_id} 已被其他人绑定！")
+                    return
+
+                old_name = data["usernames"].get(context.user_id)
+                data["usernames"][context.user_id] = mc_id
+                if old_name:
+                    self.try_add_context_message(context, f"{title}，成功为 MC 名字 {mc_id} 申请白名单！{old_name} 的白名单已移除")
+                else:
+                    self.try_add_context_message(context, f"{title}，成功为 MC 名字 {mc_id} 申请白名单！")
+
+        elif sections[0].lower() in ("/ban", "/b"):
+            if context.message_type == MessageType.CHANNEL:
+                return
             if not is_admin(context):
                 self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
                 return
-
-            if len(sections) != 2:
-                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
+            if len(sections) < 2:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/ban ID")
                 return
+            mc_id = " ".join(sections[1:]).lower()
+            data = aichan_storage.bot_data
+            data.setdefault("manual_banlist", [])
+            if mc_id in data["manual_banlist"]:
+                self.try_add_context_message(context, f"{title}，玩家 {mc_id} 已被封禁！")
+            else:
+                data["manual_banlist"].append(mc_id)
+                self.try_add_context_message(context, f"{title}，已封禁玩家 {mc_id}！")
+                await self.server.broadcast_packet(SocketPacket(
+                    PacketType.BOT_PLAYER_BAN_TO_SERVER,
+                    [mc_id]
+                ))
 
-            mc_id = sections[1]
-            server_cmd = "whitelist add " + mc_id
-            await self.server.broadcast_packet(SocketPacket(
-                PacketType.BOT_COMMAND_TO_SERVER,
-                [context.to_json(), 'all', server_cmd]
-            ))
+        elif sections[0].lower() in ("/pardon", "/unban"):
+            if context.message_type == MessageType.CHANNEL:
+                return
+            if not is_admin(context):
+                self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
+                return
+            if len(sections) < 2:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/unban ID")
+                return
+            mc_id = " ".join(sections[1:]).lower()
+            data = aichan_storage.bot_data
+            if mc_id in data.get("manual_banlist", []):
+                data["manual_banlist"].remove(mc_id)
+                self.try_add_context_message(context, f"{title}，已解封玩家 {mc_id}！")
+            else:
+                self.try_add_context_message(context, f"{title}，玩家 {mc_id} 未被封禁！")
+
+        elif sections[0].lower() in ("/banlist",):
+            if context.message_type == MessageType.CHANNEL:
+                return
+            if not is_admin(context):
+                self.try_add_context_message(context, f"{title}，你没有权限使用这个指令哦！")
+                return
+            data = aichan_storage.bot_data
+            lst = data.get("manual_banlist", [])
+            if not lst:
+                self.try_add_context_message(context, f"{title}，封禁名单中没有玩家！")
+            else:
+                self.try_add_context_message(context, f"{title}，封禁名单中共有 {len(lst)} 名玩家: {', '.join(lst)}")
 
         elif sections[0].lower() in ("/history", "history", "/h", "h"):
             if len(sections) != 1:
@@ -595,16 +667,28 @@ class AiChanQQ(botpy.Client):
             self.try_add_context_message(context, f"你好，{title}！")
 
         elif sections[0].lower() in ("/whitelist", "whitelist"):
-            if not is_admin(context):
-                if len(sections) < 2:
-                    self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
-                    return
-
-                mc_id = " ".join(sections[1:])
-                self.try_add_context_message(context, f"{title}，成功将玩家 {mc_id} 加入白名单！")
-
+            if context.message_type == MessageType.CHANNEL:
+                return
+            mc_id = " ".join(sections[1:]) if len(sections) > 1 else ""
+            if mc_id:
+                self.try_add_context_message(context, f"{title}，成功为 MC 名字 {mc_id} 申请白名单！")
             else:
-                await self.handle_command(cmd, context, title)
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/whitelist ID")
+
+        elif sections[0].lower() in ("/ban", "/b"):
+            if context.message_type == MessageType.CHANNEL:
+                return
+            await self.handle_command(cmd, context, title)
+
+        elif sections[0].lower() in ("/pardon", "/unban"):
+            if context.message_type == MessageType.CHANNEL:
+                return
+            await self.handle_command(cmd, context, title)
+
+        elif sections[0].lower() in ("/banlist",):
+            if context.message_type == MessageType.CHANNEL:
+                return
+            await self.handle_command(cmd, context, title)
 
         elif sections[0].lower() in ("/history", "history"):
             self.try_add_context_message(context, f"{title}，正在获取服务器动态...\n服务器最近无动态。")
