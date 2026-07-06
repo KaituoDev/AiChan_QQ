@@ -527,8 +527,10 @@ class AiChanQQ(botpy.Client):
 
                 old_name = data["usernames"].get(context.user_id)
                 data["usernames"][context.user_id] = mc_id
-                if old_name:
+                if old_name and old_name != mc_id:
                     self.try_add_context_message(context, f"{title}，成功为 MC 名字 {mc_id} 申请白名单！{old_name} 的白名单已移除")
+                elif old_name:
+                    self.try_add_context_message(context, f"{title}，MC 名字 {mc_id} 已绑定，无需重复申请！")
                 else:
                     self.try_add_context_message(context, f"{title}，成功为 MC 名字 {mc_id} 申请白名单！")
 
