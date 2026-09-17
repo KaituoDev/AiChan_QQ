@@ -121,6 +121,16 @@ def parse_command_sections(cmd: str, message_type: MessageType) -> List[str]:
     return sections
 
 
+def remove_group_mentions(content: str, mentions) -> str:
+    """Remove structured group mentions while preserving other @ characters."""
+    content = content or ""
+    for mention in mentions or ():
+        member_openid = getattr(mention, "member_openid", None)
+        if member_openid:
+            content = content.replace(f"<@{member_openid}>", " ")
+    return content.lstrip()
+
+
 @dataclass(frozen=True)
 class MessageContext:
     """
@@ -157,6 +167,8 @@ class MessageContext:
 class ContextState:
     messages: List[str] = field(default_factory=list)
     sequence: int = 1
+    # Legacy GROUP_AT_MESSAGE_CREATE replies automatically mention the sender.
+    reply_mentions_author: bool = False
 
 
 @dataclass
@@ -213,12 +225,18 @@ class AiChanQQ(botpy.Client):
         self.audit_mode : bool = aichan_storage.bot_config["audit_mode"]
 
 
-    async def add_context(self, context: MessageContext):
+    async def add_context(
+            self,
+            context: MessageContext,
+            reply_mentions_author: bool = False,
+    ):
         """
         Add a command context to the bot, and start a background task to poll messages of the context and delete the context after a certain time.
         :param context: The context of the command, including source type, source ID, and message ID.
         """
-        self.message_contexts[context] = ContextState()
+        self.message_contexts[context] = ContextState(
+            reply_mentions_author=reply_mentions_author,
+        )
         polling_and_deletion_task = asyncio.create_task(self.context_message_polling_and_deletion(context))
         # Add the task to the set of background tasks.
         # This is to prevent the task from midway being garbage collected and thus not being executed.
@@ -266,12 +284,12 @@ class AiChanQQ(botpy.Client):
 
         if context.message_type == MessageType.GROUP:
             try:
+                content_prefix = "\n" if state.reply_mentions_author else ""
                 await self.api.post_group_message(
                     group_openid=context.group_id,
                     msg_type=0,
                     msg_id=context.message_id,
-                    # Group messages automatically add a "@user", so use a new line to avoid messing up the format.
-                    content="\n" + combined_message,
+                    content=content_prefix + combined_message,
                     msg_seq=state.sequence,
                 )
                 state.sequence += 1
@@ -849,7 +867,12 @@ class AiChanQQ(botpy.Client):
         self.last_received_channel_msg_context = context
 
 
-    async def handle_group_message(self, message: GroupMessage):
+    async def handle_group_message(
+            self,
+            message: GroupMessage,
+            content: str,
+            reply_mentions_author: bool = False,
+    ):
         """Handle the common payload of full and @-only group events."""
         logger.info(f"Received group message:\n{get_formatted_time()}[{message.group_openid}][{message.author.member_openid}] ->\n{message.content}")
 
@@ -858,30 +881,34 @@ class AiChanQQ(botpy.Client):
             message_id=message.id,
             timestamp=get_unix_timestamp_from_rfc3339(message.timestamp),
             group_id=message.group_openid,
-            user_id=message.author.member_openid
+            user_id=message.author.member_openid,
         )
         if context not in self.message_contexts:
-            await self.add_context(context)
+            await self.add_context(
+                context,
+                reply_mentions_author=reply_mentions_author,
+            )
 
         if self.audit_mode:
-            await self.handle_command_audit_mode(message.content, context)
+            await self.handle_command_audit_mode(content, context)
         else:
-            await self.handle_command(message.content, context)
+            await self.handle_command(content, context)
 
 
     # Listen to every group message after "receive all messages" is enabled.
     # Only slash commands are handled here so normal conversation and legacy
     # short aliases such as "s" or "p" do not accidentally trigger commands.
     async def on_group_message_create(self, message: GroupMessage):
-        content = message.content or ""
-        if not content.lstrip().startswith("/"):
+        content = remove_group_mentions(message.content, getattr(message, "mentions", ()))
+        if not content.startswith("/"):
             return
-        await self.handle_group_message(message)
+        await self.handle_group_message(message, content)
 
 
     # Keep the original @ event for groups without full-message access.
     async def on_group_at_message_create(self, message: GroupMessage):
-        await self.handle_group_message(message)
+        content = remove_group_mentions(message.content, getattr(message, "mentions", ()))
+        await self.handle_group_message(message, content, reply_mentions_author=True)
 
 
     # Listen to private messages
