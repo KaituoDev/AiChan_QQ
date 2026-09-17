@@ -51,6 +51,49 @@ PRIVATE_AND_GROUP_COMMAND_ALIASES = {
     "l": "list",
 }
 
+NORMAL_CHANNEL_USER_HELP = """指令帮助：
+/list 查看在线玩家
+/ai 呼叫机器人
+/help 查看指令帮助
+/history 查看最近消息
+/name <MC名字> 绑定MC名字
+/ping 查看在线服务器
+/say <内容> 向服务器发送消息"""
+
+NORMAL_CHANNEL_ADMIN_HELP = """指令帮助：
+/list 查看在线玩家
+/ai 呼叫机器人
+/command <服务器代号> <指令> 执行服务器指令
+/help 查看指令帮助
+/history 查看最近消息
+/keyword allow/deny add/remove <关键词> 管理过滤关键词
+/name <MC名字> 绑定MC名字
+/ping 查看在线服务器
+/say <内容> 向服务器发送消息"""
+
+NORMAL_PRIVATE_GROUP_USER_HELP = """指令帮助：
+/whitelist <ID> 申请白名单
+/list 查看在线玩家
+/ai 呼叫机器人
+/help 查看指令帮助
+/history 查看最近消息
+/ping 查看在线服务器"""
+
+NORMAL_PRIVATE_GROUP_ADMIN_HELP = """指令帮助：
+/whitelist <ID> 申请白名单
+/list 查看在线玩家
+/ai 呼叫机器人
+/ban <ID> 封禁玩家
+/banlist 查看封禁列表
+/command <服务器代号> <指令> 执行服务器指令
+/help 查看指令帮助
+/history 查看最近消息
+/keyword allow/deny add/remove <关键词> 管理过滤关键词
+/pardon <ID> 解除玩家封禁
+/ping 查看在线服务器
+/whitelist add <ID> 添加额外白名单
+/whitelist list 查看额外白名单
+/whitelist remove <ID> 移除额外白名单"""
 
 def parse_command_sections(cmd: str, message_type: MessageType) -> List[str]:
     """Split a command and apply the syntax rules for its message source."""
@@ -133,6 +176,17 @@ def is_admin(context: MessageContext) -> bool:
         return context.user_id in (config.get("guild_admins") or [])
 
     return False
+
+
+def get_help_text(context: MessageContext) -> str:
+    """Return the fixed help text matching the message source and permissions."""
+    if context.message_type == MessageType.CHANNEL:
+        if is_admin(context):
+            return NORMAL_CHANNEL_ADMIN_HELP
+        return NORMAL_CHANNEL_USER_HELP
+    if is_admin(context):
+        return NORMAL_PRIVATE_GROUP_ADMIN_HELP
+    return NORMAL_PRIVATE_GROUP_USER_HELP
 
 
 class AiChanQQ(botpy.Client):
@@ -361,7 +415,13 @@ class AiChanQQ(botpy.Client):
             return
 
         config = aichan_storage.bot_config
-        if sections[0] == "say":
+        if sections[0] == "help":
+            if len(sections) != 1:
+                self.try_add_context_message(context, f"{title}，指令使用有误哦！请使用/help")
+                return
+            self.try_add_context_message(context, get_help_text(context))
+
+        elif sections[0] == "say":
             # Sending messages to Minecraft servers is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
                 return
@@ -664,7 +724,10 @@ class AiChanQQ(botpy.Client):
         if len(sections) == 0:
             return
 
-        if sections[0] == "say":
+        if sections[0] == "help":
+            return
+
+        elif sections[0] == "say":
             # Sending messages to Minecraft servers is only allowed in guild channels.
             if context.message_type != MessageType.CHANNEL:
                 self.try_add_context_message(context, f"{title}，发送消息仅支持在频道中使用哦！")
