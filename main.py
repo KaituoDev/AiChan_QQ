@@ -11,6 +11,7 @@ import word_filter_api
 
 from aichan_qq import AiChanQQ
 from aichan_server import AiChanServer
+from botpy_compat import enable_group_message_create
 
 LOGS_DIR_PATH = os.path.join(os.getcwd(), "logs")
 
@@ -55,6 +56,10 @@ async def handle_user_input():
 async def main():
     aichan_storage.load_config()
     aichan_storage.load_data()
+
+    # qq_botpy 1.2.1 cannot parse the newly added GROUP_MESSAGE_CREATE
+    # gateway event. This becomes a no-op after upgrading to a supporting SDK.
+    enable_group_message_create()
 
     # Initialize the global api session before creating tasks
     await word_filter_api.init_client()
